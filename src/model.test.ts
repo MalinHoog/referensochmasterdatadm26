@@ -1,0 +1,7 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {advance,connections,systems,downstream} from './model';
+import {chapters} from './chapters';
+test('all chapter steps can be traversed forward and backward without invalid state',()=>{for(const c of chapters){let p={scene:0,step:0};const states=[p];for(let i=1;i<c.scenes.reduce((n,s)=>n+s.steps.length,0);i++){p=advance(p.scene,p.step,1,c.scenes);states.push(p)}assert.deepEqual(advance(p.scene,p.step,1,c.scenes),p);for(let i=states.length-2;i>=0;i--){p=advance(p.scene,p.step,-1,c.scenes);assert.deepEqual(p,states[i])}assert.deepEqual(advance(0,0,-1,c.scenes),{scene:0,step:0})}});
+test('scenario endpoints exist and unverified connections do not affect analysis',()=>{const ids=new Set(systems.map(s=>s.id));for(const c of connections){assert.ok(ids.has(c.source));assert.ok(ids.has(c.target));assert.ok(c.data&&c.frequency)}assert.ok(!downstream('crm').includes('data'));assert.ok(downstream('erp').includes('reports'));assert.ok(!downstream('erp').includes('erp'))});
+test('seven complete scenes have notes, questions and multiple steps',()=>{assert.equal(chapters[0].scenes.length,7);for(const c of chapters){assert.equal(new Set(c.scenes.map(s=>s.id)).size,c.scenes.length);for(const s of c.scenes){assert.ok(s.steps.length>1);assert.ok(s.question&&s.section&&s.concept);assert.equal(Object.values(s.notes).filter(Boolean).length,6)}}});
